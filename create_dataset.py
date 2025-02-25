@@ -4,7 +4,7 @@ import mediapipe as mp
 import cv2
 import matplotlib.pyplot as plt
 
-DATA_DIR= './data'
+DATA_DIR = './data'
 
 for dir_ in os.listdir(DATA_DIR):
     for img_path in os.listdir(os.path.join(DATA_DIR, dir_))[:1]:
@@ -14,4 +14,4 @@ for dir_ in os.listdir(DATA_DIR):
         plt.figure()
         plt.imshow(img_rgb)
         
-plt.show
+plt.show()

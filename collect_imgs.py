@@ -1,64 +1,52 @@
-import cv2
 import os
-import time
+import cv2
 
-# Create folder 'DATA' if it doesn't exist
-folder_name = "DATA"
-if not os.path.exists(folder_name):
-    os.makedirs(folder_name)
+DATA_DIR = './data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
+number_of_classes = 3
+dataset_size = 100
+
+# Initialize camera (try different indices if 0 doesn't work)
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
-    print("Cannot open camera")
+    print("Error: Cannot access camera. Try changing the index (0, 1, 2, etc.)")
     exit()
 
-num_images = 30
-capture_duration = 4  # seconds
-capture_interval = capture_duration / num_images
+for j in range(number_of_classes):
+    class_dir = os.path.join(DATA_DIR, str(j))
+    if not os.path.exists(class_dir):
+        os.makedirs(class_dir)
 
-capturing = False
-image_count = 0
-next_capture_time = None
+    print(f'Collecting data for class {j}')
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Can't receive frame (stream end?). Exiting ...")
-        break
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame. Exiting...")
+            cap.release()
+            cv2.destroyAllWindows()
+            exit()
 
-    key = cv2.waitKey(1) & 0xFF
-    
-    cv2.putText(frame, "Press 'q' to quit", (80, 80),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, 'Ready? Press "Q" to start!', (100, 50), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.imshow('frame', frame)
+        
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
 
-    # If not capturing, display prompt overlay on the camera feed
-    if not capturing:
-        cv2.putText(frame, "Press 's' to start capturing", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        if key == ord('s'):
-            capturing = True
-            image_count = 0
-            next_capture_time = time.time()  # capture immediately
-    else:
-        # While capturing, overlay count info
-        cv2.putText(frame, f"Capturing: {image_count}/{num_images}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        current_time = time.time()
-        if image_count < num_images and current_time >= next_capture_time:
-            filename = os.path.join(folder_name, f"image_{image_count+1:02d}.jpg")
-            cv2.imwrite(filename, frame)
-            image_count += 1
-            next_capture_time = current_time + capture_interval
-        if image_count >= num_images:
-            cv2.putText(frame, "Capture Complete", (10, 60),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            # Optionally, you could reset capturing after some time or leave it as is
+    counter = 0
+    while counter < dataset_size:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame during capture.")
+            break
 
-    cv2.imshow('Camera', frame)
-
-    # Quit on pressing 'q'
-    if key == ord('q'):
-        break
+        cv2.imshow('frame', frame)
+        cv2.waitKey(25)
+        cv2.imwrite(os.path.join(class_dir, f"{counter}.jpg"), frame)
+        counter += 1
 
 cap.release()
 cv2.destroyAllWindows()
